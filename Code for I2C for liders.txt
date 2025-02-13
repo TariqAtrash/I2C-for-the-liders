@@ -1,0 +1,87 @@
+#include <Wire.h>
+#include <Adafruit_VL53L0X.h>
+
+// ✅ Use valid GPIOs for XSHUT (not GPIO 1 or 3)
+const int lidar1_xshut = 5;
+const int lidar2_xshut = 17;
+const int lidar3_xshut = 16;
+
+// Create sensor instances
+Adafruit_VL53L0X lox1 = Adafruit_VL53L0X();
+Adafruit_VL53L0X lox2 = Adafruit_VL53L0X();
+Adafruit_VL53L0X lox3 = Adafruit_VL53L0X();
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("\n🚀 VL53L0X Multi-Sensor Boot");
+
+  Wire.begin();  // Ensure I2C is initialized
+
+  // Configure XSHUT pins as outputs
+  pinMode(lidar1_xshut, OUTPUT);
+  pinMode(lidar2_xshut, OUTPUT);
+  pinMode(lidar3_xshut, OUTPUT);
+
+  // *Reset all sensors first*
+  digitalWrite(lidar1_xshut, LOW);
+  digitalWrite(lidar2_xshut, LOW);
+  digitalWrite(lidar3_xshut, LOW);
+  delay(50);
+
+  // *Initialize Sensor 1*
+  Serial.println("🟢 Powering Sensor 1...");
+  digitalWrite(lidar1_xshut, HIGH);
+  delay(50);
+  if (!lox1.begin()) {
+    Serial.println("❌ ERROR: Sensor 1 not detected! Check wiring.");
+    while (1);
+  }
+  lox1.setAddress(0x30);
+  Serial.println("✅ Sensor 1 Ready at 0x30");
+
+  // *Initialize Sensor 2*
+  Serial.println("🟢 Powering Sensor 2...");
+  digitalWrite(lidar2_xshut, HIGH);
+  delay(50);
+  if (!lox2.begin()) {
+    Serial.println("❌ ERROR: Sensor 2 not detected! Check wiring.");
+    while (1);
+  }
+  lox2.setAddress(0x31);
+  Serial.println("✅ Sensor 2 Ready at 0x31");
+
+  // *Initialize Sensor 3*
+  Serial.println("🟢 Powering Sensor 3...");
+  digitalWrite(lidar3_xshut, HIGH);
+  delay(50);
+  if (!lox3.begin()) {
+    Serial.println("❌ ERROR: Sensor 3 not detected! Check wiring.");
+    while (1);
+  }
+  lox3.setAddress(0x32);
+  Serial.println("✅ Sensor 3 Ready at 0x32");
+
+  Serial.println("\n🚀 All Sensors Initialized Successfully!\n");
+}
+
+void loop() {
+  VL53L0X_RangingMeasurementData_t measure1, measure2, measure3;
+
+  // Read Sensor 1
+  lox1.rangingTest(&measure1, false);
+  Serial.print("📡 Sensor 1: ");
+  Serial.println(measure1.RangeStatus != 4 ? String(measure1.RangeMilliMeter / 10.0) + " cm" : "❌ Out of Range");
+
+  // Read Sensor 2
+  lox2.rangingTest(&measure2, false);
+  Serial.print("📡 Sensor 2: ");
+  Serial.println(measure2.RangeStatus != 4 ? String(measure2.RangeMilliMeter / 10.0) + " cm" : "❌ Out of Range");
+
+  // Read Sensor 3
+  lox3.rangingTest(&measure3, false);
+  Serial.print("📡 Sensor 3: ");
+  Serial.println(measure3.RangeStatus != 4 ? String(measure3.RangeMilliMeter / 10.0) + " cm" : "❌ Out of Range");
+
+  Serial.println("----------------------------------");
+  delay(5000);
+}
